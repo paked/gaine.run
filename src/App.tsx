@@ -75,7 +75,7 @@ function padRoute(route: Position[]): Position[] {
 
     let dist = Math.sqrt(dx*dx + dy*dy);
 
-    const size = 0.0002;
+    const size = 5;
     const count = dist/size;
     for (let j = 0; j < count; j++) {
       newroute.push([start[0] + dx/count*j, start[1] + dy/count*j]);
@@ -85,6 +85,8 @@ function padRoute(route: Position[]): Position[] {
       newroute.push(end);
     }
   }
+
+  console.log(newroute);
 
   return newroute;
 }
@@ -153,17 +155,15 @@ function App() {
 
   return (
     <div>
-      {/* <MapContainer center={[1900/2, 1400/2]} zoom={-1} minZoom={-3} scrollWheelZoom={false} style={{height: '800px'}} crs={CRS.Simple} whenCreated={whenCreated} >
+      <MapContainer center={[1900/2, 1400/2]} zoom={-1} minZoom={-3} maxZoom={3} scrollWheelZoom={false} style={{height: '800px'}} crs={CRS.Simple} whenCreated={whenCreated} >
         <GeoJSON data={ data as GeoJsonObject } pathOptions={{color: 'blue', weight: 4}} />
 
-        <Polyline ref={ pRef as any } positions={path} color='red' pathOptions={{opacity: 0.5}}/>
+        <Polyline positions={path} color='red' pathOptions={{opacity: 0.5}}/>
 
         <ImageOverlay bounds={[[0, 0], [1900, 1400]]} url="/map.png" />
       </MapContainer>
 
-      <button onClick={exportGeoJSON}>Export!</button>*/}
-
-      <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false} style={{height: '800px'}} whenCreated={whenCreated}>
+      {/* <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false} style={{height: '800px'}} whenCreated={whenCreated}>
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -172,7 +172,7 @@ function App() {
         <GeoJSON data={padded} pathOptions={{color: 'blue', weight: 4}} />
 
         <Polyline positions={path} color='red' pathOptions={{opacity: 0.5}}/>
-      </MapContainer>
+      </MapContainer> */}
 
         <button onClick={() => console.log(geojsonFromMap(map!))}>Export!</button>
     </div>
