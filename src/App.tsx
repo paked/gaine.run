@@ -12,10 +12,7 @@ import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 
 import PathFinder from 'geojson-path-finder-nw';
 
-// import 'leaflet/dist/leaflet.css';
 import './App.css';
-
-const shouldPad = true;
 
 function geojsonFromMap(m: Map): FeatureCollection {
   var fg = L.featureGroup();
@@ -31,15 +28,11 @@ function geojsonFromMap(m: Map): FeatureCollection {
   if (gj.type != "FeatureCollection") {
     throw new Error("this geojson is not a featurecollection!");
   }
-
+ 
   return gj;
 }
 
-type Route = [number, number][];
-
 function padGeojson(d: FeatureCollection) : FeatureCollection {
-  console.log("padding");
-
   d.features = d.features.map(f => {
     if (f.geometry.type != "LineString") {
       return f;
@@ -66,8 +59,6 @@ function padRoute(route: Position[]): Position[] {
     let start = route[i];
     let end = route[i + 1];
 
-    console.log("points", start, end);
-
     newroute.push(start);
 
     let dx = end[0] - start[0];
@@ -86,17 +77,13 @@ function padRoute(route: Position[]): Position[] {
     }
   }
 
-  console.log(newroute);
-
   return newroute;
 }
 
+const shouldPad = true;
 const padded = shouldPad ? padGeojson(data as FeatureCollection) : data as FeatureCollection;
 
 function App() {
-  // let pRef = createRef<typeof Polyline>();
-  // let pf = new PathFinder(data, {precision: 1});
-
   let [ path, setPath ] = useState<[number, number][]>([]);
 
   let [ lastMarker, setLastMarker] = useState<Feature | null>(null);
@@ -108,15 +95,39 @@ function App() {
     setMap(m);
 
     m.pm.addControls({
-      position: 'topleft',
+      position: "topleft",
+      drawPolyline: true,
+      drawRectangle: false,
       drawCircle: false,
+      drawPolygon: false,
+      editMode: true,
+      cutPolygon: false,
+      dragMode: false,
+      drawCircleMarker: false,
     });
+
+    console.log((m.pm as any).Toolbar);
+
+    let Toolbar = (m.pm as any).Toolbar;
+
+    // Toolbar.copyDrawControl('Marker', {
+    //   name: "PlotRoute",
+    //   jsClass: "PlotRoute",
+    //   afterClick: (e: any, ctx: any) => {
+    //     console.log("hello")
+    //     console.log((m.pm.Draw as any)[ctx.button._button.jsClass]);
+    //     // toggle drawing mode
+    //     (m.pm.Draw as any)[ctx.button._button.jsClass].toggle();
+    //   },
+    //   block: "draw",
+    //   title: "Plot a route",
+    //   doToggle: true,
+    //   toggleStatus: false,
+    //   disableOtherButtons: true,
+    // });
 
     m.on('pm:create', (event: any) => {
       if (event.shape != "Marker") {
-        // console.log(event.marker.toGeoJSON());
-        console.info("goodbye");
-
         setLastMarker(null);
 
         return;
@@ -130,7 +141,6 @@ function App() {
 
         let r = pf.findPath(markerRef.current, point);
         if (!r) {
-          console.error("route is null");
           setLastMarker(null);
 
           return;
@@ -138,8 +148,6 @@ function App() {
 
         let route: [number, number][] = r.path;
         route = route.map(l => [l[1], l[0]]);
-
-        console.log("set route!")
 
         setPath(route);
 
@@ -151,28 +159,15 @@ function App() {
 
   }
 
-  console.log("hello");
-
   return (
     <div>
       <MapContainer center={[1900/2, 1400/2]} zoom={-1} minZoom={-3} maxZoom={3} scrollWheelZoom={false} style={{height: '800px'}} crs={CRS.Simple} whenCreated={whenCreated} >
-        <GeoJSON data={ data as GeoJsonObject } pathOptions={{color: 'blue', weight: 4}} />
+        <GeoJSON data={ padded } pathOptions={{color: 'blue', weight: 4}} />
 
         <Polyline positions={path} color='red' pathOptions={{opacity: 0.5}}/>
 
         <ImageOverlay bounds={[[0, 0], [1900, 1400]]} url="/map.png" />
       </MapContainer>
-
-      {/* <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false} style={{height: '800px'}} whenCreated={whenCreated}>
-          <TileLayer
-            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-
-        <GeoJSON data={padded} pathOptions={{color: 'blue', weight: 4}} />
-
-        <Polyline positions={path} color='red' pathOptions={{opacity: 0.5}}/>
-      </MapContainer> */}
 
         <button onClick={() => console.log(geojsonFromMap(map!))}>Export!</button>
     </div>
