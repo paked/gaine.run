@@ -38,3 +38,10 @@
 }
 
 @import url('https://unpkg.com/leaflet@1.5.1/dist/leaflet.css');
+
+.icon {
+  border-radius: 0.5em;
+  text-align: center;
+  min-width: 2em;
+  background-color: white;
+}

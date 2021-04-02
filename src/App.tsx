@@ -4,7 +4,7 @@ import logo from './logo.svg';
 import { MapContainer, ImageOverlay, Polyline, GeoJSON, TileLayer, Marker, Popup } from 'react-leaflet';
 import L, { CRS, Map, marker } from 'leaflet';
 
-import { GeoJsonObject, Geometry, Feature, FeatureCollection, LineString, Position } from 'geojson';
+import { GeoJsonObject, Feature, Point, FeatureCollection, LineString, Position } from 'geojson';
 import data from './geojson.json' ;
 
 import '@geoman-io/leaflet-geoman-free';
@@ -83,12 +83,21 @@ function padRoute(route: Position[]): Position[] {
 const shouldPad = true;
 const padded = shouldPad ? padGeojson(data as FeatureCollection) : data as FeatureCollection;
 
-function App() {
-  let [ path, setPath ] = useState<[number, number][]>([]);
+type Waypoint = Feature<Point>;
 
-  let [ lastMarker, setLastMarker] = useState<Feature | null>(null);
-  const markerRef = useRef<Feature | null>();
-  markerRef.current = lastMarker;
+interface Segment {
+  positions: L.LatLngExpression[]
+  key: string
+}
+
+function App() {
+  let [ segments, setSegments ] = useState<Segment[]>([])
+  let segmentsRef = useRef<Segment[]>();
+  segmentsRef.current = segments;
+
+  let [ waypoints, setWaypoints ] = useState<Waypoint[]>([]);
+  let waypointsRef = useRef<Waypoint[]>();
+  waypointsRef.current = waypoints;
 
   let [ map, setMap] = useState<Map | undefined>(undefined);
   let whenCreated = (m: Map) => {
@@ -108,65 +117,60 @@ function App() {
 
     console.log((m.pm as any).Toolbar);
 
-    let Toolbar = (m.pm as any).Toolbar;
-
-    // Toolbar.copyDrawControl('Marker', {
-    //   name: "PlotRoute",
-    //   jsClass: "PlotRoute",
-    //   afterClick: (e: any, ctx: any) => {
-    //     console.log("hello")
-    //     console.log((m.pm.Draw as any)[ctx.button._button.jsClass]);
-    //     // toggle drawing mode
-    //     (m.pm.Draw as any)[ctx.button._button.jsClass].toggle();
-    //   },
-    //   block: "draw",
-    //   title: "Plot a route",
-    //   doToggle: true,
-    //   toggleStatus: false,
-    //   disableOtherButtons: true,
-    // });
-
     m.on('pm:create', (event: any) => {
-      if (event.shape != "Marker") {
-        setLastMarker(null);
+      if (event.shape !== "Marker") {
+        // setLastMarker(null);
 
         return;
       };
 
-      let point = event.marker.toGeoJSON() as Feature;
-      
-      console.log(markerRef.current);
-      if (markerRef.current) {
-        let pf = new PathFinder(geojsonFromMap(m));
-
-        let r = pf.findPath(markerRef.current, point);
-        if (!r) {
-          setLastMarker(null);
-
-          return;
-        }
-
-        let route: [number, number][] = r.path;
-        route = route.map(l => [l[1], l[0]]);
-
-        setPath(route);
-
-        setLastMarker(null);
+      if (!waypointsRef.current || !segmentsRef.current) {
+        console.error("waypoints not set")
+        return;
       }
 
-      setLastMarker(point);
-    });
+      let to = event.marker.toGeoJSON() as Feature<Point>;
 
+      if (waypointsRef.current.length > 0) {
+        let route: [number, number][] = [];
+
+        let from = waypointsRef.current[waypointsRef.current.length-1];
+
+        let pf = new PathFinder(geojsonFromMap(m));
+        let path = pf.findPath(from, to);
+        if (path) {
+          route = path.path;
+          route = route.map(l => [l[1], l[0]]);
+        } else {
+          route = [
+            [from.geometry.coordinates[1], from.geometry.coordinates[0]],
+            [to.geometry.coordinates[1], to.geometry.coordinates[0]]
+          ]
+        }
+
+        setSegments([...segmentsRef.current, { positions: route, key: segmentsRef.current.length.toString() }]);
+      }
+
+      setWaypoints([...waypointsRef.current, to])
+    });
   }
+
+  let Segments = segmentsRef.current.map(segment => {
+    return <Polyline key={segment.key} positions={segment.positions}  color='red' pathOptions={{opacity: 0.5}}/>
+  })
 
   return (
     <div>
       <MapContainer center={[1900/2, 1400/2]} zoom={-1} minZoom={-3} maxZoom={3} scrollWheelZoom={false} style={{height: '800px'}} crs={CRS.Simple} whenCreated={whenCreated} >
-        <GeoJSON data={ padded } pathOptions={{color: 'blue', weight: 4}} />
+        <GeoJSON data={ padded } pathOptions={{color: 'blue', weight: 4, opacity: 0.1}} />
 
-        <Polyline positions={path} color='red' pathOptions={{opacity: 0.5}}/>
+        { Segments }
 
         <ImageOverlay bounds={[[0, 0], [1900, 1400]]} url="/map.png" />
+
+        <Marker position={[1900/2, 1400/2]} icon={new L.DivIcon({html: "<span class='icon'>1</span>", className: "icon", iconSize:  undefined})} draggable={true}>
+
+        </Marker>
       </MapContainer>
 
         <button onClick={() => console.log(geojsonFromMap(map!))}>Export!</button>
