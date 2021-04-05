@@ -112,6 +112,19 @@ function RoutePicker() {
   waypointsRef.current = waypoints;
 
   let [map, setMap] = useState<Map | undefined>(undefined);
+
+  let plotRouteEnable = (button: any, n: number) => {
+    console.log("enable")
+    button.enable( {
+      markerStyle: {
+        icon: new L.DivIcon({
+          html: `<span class='icon'>${n}</span>`,
+          className: "icon",
+          iconSize: undefined,
+        })}
+    });
+  }
+
   let whenCreated = (m: Map) => {
     setMap(m);
 
@@ -127,12 +140,26 @@ function RoutePicker() {
       drawCircleMarker: false,
     });
 
-    console.log((m.pm as any).Toolbar);
+    (m.pm as any).Toolbar.copyDrawControl('Marker', {  
+      name: 'PlotRoute',  
+      block: 'custom',  
+      title: 'Plot your route',
+      afterClick: (e: any, ctx: any) => {
+        let button = (m.pm as any).Draw['PlotRoute'];
+
+        if (!waypointsRef.current) {
+          console.error("wapoints ref not set")
+          return;
+        }
+
+        if (!button.enabled()) {
+          plotRouteEnable(button, waypointsRef.current.length + 1);
+        }
+      }
+    });
 
     m.on("pm:create", (event: any) => {
-      if (event.shape !== "Marker") {
-        // setLastMarker(null);
-
+      if (event.shape !== "PlotRoute") {
         return;
       }
 
@@ -148,7 +175,7 @@ function RoutePicker() {
 
         let from = waypointsRef.current[waypointsRef.current.length - 1];
 
-        let pf = new PathFinder(geojsonFromMap(m));
+        let pf = new PathFinder(padded);
         let path = pf.findPath(from, to);
         if (path) {
           route = path.path;
@@ -167,6 +194,11 @@ function RoutePicker() {
       }
 
       setWaypoints([...waypointsRef.current, to]);
+
+      // TODO(harrison): i'm trying to create a "continueDrawing" effect without actually using that option, since I need to modify the options in the middle there. Long term: if I can find a way to fix this, remove this todo. otherwise, change this to a note.
+      setTimeout(() => {
+        plotRouteEnable((m.pm as any).Draw['PlotRoute'], waypointsRef.current!.length + 1);
+      }, 100)
     });
   };
 
@@ -202,18 +234,6 @@ function RoutePicker() {
           ]}
           url="/map.png"
         />
-
-        <Marker
-          position={[1900 / 2, 1400 / 2]}
-          icon={
-            new L.DivIcon({
-              html: "<span class='icon'>1</span>",
-              className: "icon",
-              iconSize: undefined,
-            })
-          }
-          draggable={true}
-        ></Marker>
       </MapContainer>
 
       {/* <button onClick={() => console.log(geojsonFromMap(map!))}>Export!</button> */}

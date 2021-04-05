@@ -21,7 +21,9 @@ function App() {
           <div className="pane">
             <h2>route info</h2>
             <div className="divider" />
-            <p>hello</p>
+
+            <p>🏃 33km</p>
+            <p>🎯 1000 points</p>
           </div>
 
           <div className="pane">
