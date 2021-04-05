@@ -1,47 +1,63 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @import url('https://unpkg.com/leaflet@1.5.1/dist/leaflet.css');
 
-.icon {
-  border-radius: 0.5em;
-  text-align: center;
-  min-width: 2em;
-  background-color: white;
+header {
+  display: flex;
+  align-items: center;
+}
+
+header > h1 {
+  height: 100%;
+  margin: 0;
+  background-color: #00A3FF;
+  color: white;
+  font-weight: normal;
+
+  padding: .2em .2em;
+}
+
+header > .tagline {
+  margin-left: .4em;
+  font-size: 1.3em;
+}
+
+main {
+  display: flex;
+  flex-flow: wrap;
+}
+
+.map {
+  border-top: 1px #E5E5E5 solid;
+
+  flex-basis: 800px;
+  flex-grow: 1;
+}
+
+.sidebar {
+  border-top: 1px #E5E5E5 solid;
+  border-left: 1px #E5E5E5 solid;
+
+  flex-grow: 1;
+  min-width: 300px;
+
+  /* padding-left: 2em; */
+}
+
+.pane {
+  margin-left: 2em;
+  margin-right: 2em;
+}
+
+.pane > h2 {
+  color: #00A3FF;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.pane:not(:first-child) {
+  border-top: 1px #E5E5E5 dashed;
+}
+
+.divider:empty {
+  width: 10em;
+  border-bottom: 1px #E5E5E5 solid;
 }
